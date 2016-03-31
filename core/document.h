@@ -770,6 +770,12 @@ class OKULAR_EXPORT Document : public QObject
          * @since 0.10 (KDE 4.4)
          */
         bool saveChanges( const QString &fileName, QString *errorText );
+        
+        /**
+         * Imports annotations from the given document @p doc
+         */
+        void importAnnotations( const Document* doc );
+
 
         /**
          * Register the specified @p view for the current document.

@@ -4313,6 +4313,37 @@ bool Document::saveChanges( const QString &fileName, QString *errorText )
     return saveIface->save( fileName, SaveInterface::SaveChanges, errorText );
 }
 
+void Document::importAnnotations(const Document *doc)
+{
+
+    QDomDocument domDoc;
+    uint common_pages = doc->pages() >= pages() ? pages():doc->pages();
+    
+    for(uint pg_num=0;pg_num<common_pages;pg_num++) {
+        const Page* src_pg = doc->page(pg_num);
+        
+        if (src_pg->hasAnnotations()) 
+        {
+            QLinkedList< Annotation* > annots = src_pg->annotations();
+            for(QLinkedList< Annotation* >::const_iterator it=annots.begin();it != annots.end(); ++it)
+            {
+                QDomElement annotationEl = domDoc.createElement("annotation");
+                AnnotationUtils::storeAnnotation(*it, annotationEl, domDoc);
+                Annotation* annotation = AnnotationUtils::createAnnotation(annotationEl);
+                
+                if (annotation) 
+                {
+                    d->performAddPageAnnotation(pg_num,annotation);
+                }
+                else 
+                    kWarning(OkularDebug).nospace() << "page (" << pg_num << "): can't import an annotation.";
+            }
+        }
+    }
+
+}
+
+
 void Document::registerView( View *view )
 {
     if ( !view )
