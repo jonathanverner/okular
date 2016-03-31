@@ -122,6 +122,7 @@ class OKULAR_PART_EXPORT Part : public KParts::ReadWritePart, public Okular::Doc
         void notifyPageChanged( int page, int flags );
 
         bool openDocument(const KUrl& url, uint page);
+        void importAnnotations(const Part* part);
         void startPresentation();
         QStringList supportedMimeTypes() const;
 

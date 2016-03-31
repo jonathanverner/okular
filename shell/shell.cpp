@@ -55,6 +55,7 @@
 #include "kdocumentviewer.h"
 #include "../interfaces/viewerinterface.h"
 #include "shellutils.h"
+#include "part.h"
 
 static const char *shouldShowMenuBarComingFromFullScreen = "shouldShowMenuBarComingFromFullScreen";
 static const char *shouldShowToolBarComingFromFullScreen = "shouldShowToolBarComingFromFullScreen";
@@ -217,7 +218,10 @@ void Shell::openUrl( const KUrl & url, const QString &serializedOptions )
             if( m_unique )
             {
                 applyOptionsToPart( activePart, serializedOptions );
-                activePart->openUrl( url );
+                if ( activePart->openUrl( url ) ) 
+                {
+                    m_importAnnotationsAction->setEnabled(true);
+                }
             }
             else
             {
@@ -243,6 +247,7 @@ void Shell::openUrl( const KUrl & url, const QString &serializedOptions )
             {
                 if ( openOk )
                 {
+                    m_importAnnotationsAction->setEnabled(true);
 #ifdef KActivities_FOUND
                     if ( !m_activityResource )
                         m_activityResource = new KActivities::ResourceInstance( window()->winId(), this );
@@ -310,6 +315,11 @@ void Shell::setupActions()
 
   m_showMenuBarAction = KStandardAction::showMenubar( this, SLOT(slotShowMenubar()), actionCollection());
   m_fullScreenAction = KStandardAction::fullScreen( this, SLOT(slotUpdateFullScreen()), this,actionCollection() );
+  
+  m_importAnnotationsAction = actionCollection()->addAction("import-annotations");
+  m_importAnnotationsAction->setText( i18n("Import Annotations") );
+  m_importAnnotationsAction->setEnabled( false );
+  connect( m_importAnnotationsAction, SIGNAL(triggered()), this, SLOT(importAnnotations()) );
 
   m_nextTabAction = actionCollection()->addAction("tab-next");
   m_nextTabAction->setText( i18n("Next Tab") );
@@ -419,6 +429,54 @@ void Shell::fileOpen()
     }
 }
 
+void Shell::importAnnotations()
+{
+        // this slot is called whenever the File->Open menu is selected,
+        // the Open shortcut is pressed (usually CTRL+O) or the Open toolbar
+        // button is clicked
+    const int activeTab = m_tabWidget->currentIndex();
+    if ( !m_fileformatsscanned )
+    {
+        const KDocumentViewer* const doc = qobject_cast<KDocumentViewer*>(m_tabs[activeTab].part);
+        if ( doc )
+            m_fileformats = doc->supportedMimeTypes();
+
+        if ( m_fileformats.isEmpty() )
+            m_fileformats = fileFormats();
+
+        m_fileformatsscanned = true;
+    }
+
+    QString startDir;
+    Okular::Part* curPart = qobject_cast< Okular::Part* >(m_tabs[activeTab].part);
+    if ( curPart->url().isLocalFile() )
+        startDir = curPart->url().toLocalFile();
+    KFileDialog dlg( startDir, QString(), this );
+    dlg.setOperationMode( KFileDialog::Opening );
+
+    // A directory may be a document. E.g. comicbook generator.
+    if ( m_fileformats.contains( "inode/directory" ) )
+        dlg.setMode( dlg.mode() | KFile::Directory );
+
+    if ( m_fileformatsscanned && m_fileformats.isEmpty() )
+        dlg.setFilter( i18n( "*|All Files" ) );
+    else
+        dlg.setMimeFilter( m_fileformats );
+    dlg.setCaption( i18n( "Import Annotations" ) );
+    if ( !dlg.exec() )
+        return;
+    KUrl url = dlg.selectedUrl();
+    if ( !url.isEmpty() )
+    {
+        Okular::Part* tempPart = qobject_cast< Okular::Part* >(m_partFactory->create(this));
+        qobject_cast<KParts::ReadWritePart*>(tempPart)->openUrl( url );
+        curPart->importAnnotations(tempPart);
+        if( tempPart->factory() ) tempPart->factory()->removeClient( tempPart );
+        tempPart->disconnect();
+        tempPart->deleteLater();
+    }
+}
+
 void Shell::tryRaise()
 {
     KWindowSystem::forceActiveWindow( window()->effectiveWinId() );
@@ -522,8 +580,9 @@ void Shell::closeTab( int tab )
             m_nextTabAction->setEnabled( false );
             m_prevTabAction->setEnabled( false );
         }
-    }
-
+    } 
+    else 
+        m_importAnnotationsAction->setEnabled(false);
 }
 
 void Shell::openNewTab( const KUrl& url, const QString &serializedOptions )

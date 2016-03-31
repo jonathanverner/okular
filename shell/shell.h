@@ -100,6 +100,7 @@ protected:
 
 private slots:
   void fileOpen();
+  void importAnnotations();
 
   void slotUpdateFullScreen();
   void slotShowMenubar();
@@ -143,6 +144,7 @@ private:
   bool m_fileformatsscanned;
   KAction* m_printAction;
   KAction* m_closeAction;
+  KAction* m_importAnnotationsAction;
   KToggleAction* m_fullScreenAction;
   KToggleAction* m_showMenuBarAction;
   bool m_menuBarWasShown, m_toolBarWasShown;

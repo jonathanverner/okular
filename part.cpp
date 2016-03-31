@@ -2279,6 +2279,10 @@ bool Part::saveAs( const KUrl & saveUrl )
     return true;
 }
 
+void Part::importAnnotations(const Part* part)
+{
+    m_document->importAnnotations(part->m_document);
+}
 
 void Part::slotSaveCopyAs()
 {
