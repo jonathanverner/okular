@@ -1117,6 +1117,8 @@ class OKULAR_EXPORT Document : public QObject
         /// @endcond
         DocumentPrivate *const d;
 
+        bool hasAnnotation( int page, Annotation* a );
+
         Q_DISABLE_COPY( Document )
 
         Q_PRIVATE_SLOT( d, void saveDocumentInfo() const )

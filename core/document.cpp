@@ -4313,6 +4313,18 @@ bool Document::saveChanges( const QString &fileName, QString *errorText )
     return saveIface->save( fileName, SaveInterface::SaveChanges, errorText );
 }
 
+bool Document::hasAnnotation(int pg_num, Annotation* a)
+{
+    QLinkedList< Annotation* > annots = page(pg_num)->annotations();
+    for(QLinkedList< Annotation* >::const_iterator it=annots.begin();it != annots.end(); ++it)
+    {
+        if ( (*it)->uniqueName() == a->uniqueName() )
+            return true;
+    }
+    return false;
+}
+
+
 void Document::importAnnotations(const Document *doc)
 {
 
@@ -4327,16 +4339,19 @@ void Document::importAnnotations(const Document *doc)
             QLinkedList< Annotation* > annots = src_pg->annotations();
             for(QLinkedList< Annotation* >::const_iterator it=annots.begin();it != annots.end(); ++it)
             {
-                QDomElement annotationEl = domDoc.createElement("annotation");
-                AnnotationUtils::storeAnnotation(*it, annotationEl, domDoc);
-                Annotation* annotation = AnnotationUtils::createAnnotation(annotationEl);
-                
-                if (annotation) 
-                {
-                    d->performAddPageAnnotation(pg_num,annotation);
+                if ( !hasAnnotation(pg_num, *it) ) {
+                    QDomElement annotationEl = domDoc.createElement("annotation");
+                    AnnotationUtils::storeAnnotation(*it, annotationEl, domDoc);
+                    Annotation* annotation = AnnotationUtils::createAnnotation(annotationEl);
+                    if (annotation)
+                    {
+                        d->performAddPageAnnotation(pg_num,annotation);
+                    }
+                    else
+                        kWarning(OkularDebug).nospace() << "page (" << pg_num << "): can't import an annotation.";
                 }
-                else 
-                    kWarning(OkularDebug).nospace() << "page (" << pg_num << "): can't import an annotation.";
+                else
+                    kWarning(OkularDebug).nospace() << "page (" << pg_num << "): annotation with ID "<<(*it)->uniqueName() << " already present, not importing.";
             }
         }
     }

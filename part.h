@@ -32,6 +32,7 @@
 
 #include <QtDBus/QtDBus>
 
+class QObject;
 class QAction;
 class QWidget;
 class QPrinter;
@@ -122,8 +123,8 @@ class OKULAR_PART_EXPORT Part : public KParts::ReadWritePart, public Okular::Doc
         void notifyPageChanged( int page, int flags );
 
         bool openDocument(const KUrl& url, uint page);
-        void importAnnotations(const Part* part);
         void startPresentation();
+        void importAnnotations(const QObject* part);
         QStringList supportedMimeTypes() const;
 
         KUrl realUrl() const;

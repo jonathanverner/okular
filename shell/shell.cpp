@@ -55,7 +55,6 @@
 #include "kdocumentviewer.h"
 #include "../interfaces/viewerinterface.h"
 #include "shellutils.h"
-#include "part.h"
 
 static const char *shouldShowMenuBarComingFromFullScreen = "shouldShowMenuBarComingFromFullScreen";
 static const char *shouldShowToolBarComingFromFullScreen = "shouldShowToolBarComingFromFullScreen";
@@ -313,13 +312,14 @@ void Shell::setupActions()
 
   setStandardToolBarMenuEnabled(true);
 
-  m_showMenuBarAction = KStandardAction::showMenubar( this, SLOT(slotShowMenubar()), actionCollection());
-  m_fullScreenAction = KStandardAction::fullScreen( this, SLOT(slotUpdateFullScreen()), this,actionCollection() );
-  
   m_importAnnotationsAction = actionCollection()->addAction("import-annotations");
   m_importAnnotationsAction->setText( i18n("Import Annotations") );
+  m_importAnnotationsAction->setIcon(KIcon("document-import"));
   m_importAnnotationsAction->setEnabled( false );
   connect( m_importAnnotationsAction, SIGNAL(triggered()), this, SLOT(importAnnotations()) );
+
+  m_showMenuBarAction = KStandardAction::showMenubar( this, SLOT(slotShowMenubar()), actionCollection());
+  m_fullScreenAction = KStandardAction::fullScreen( this, SLOT(slotUpdateFullScreen()), this,actionCollection() );
 
   m_nextTabAction = actionCollection()->addAction("tab-next");
   m_nextTabAction->setText( i18n("Next Tab") );
@@ -431,9 +431,7 @@ void Shell::fileOpen()
 
 void Shell::importAnnotations()
 {
-        // this slot is called whenever the File->Open menu is selected,
-        // the Open shortcut is pressed (usually CTRL+O) or the Open toolbar
-        // button is clicked
+    // This slot is called whenever the File->Import Annotations menu is selected,
     const int activeTab = m_tabWidget->currentIndex();
     if ( !m_fileformatsscanned )
     {
@@ -448,7 +446,7 @@ void Shell::importAnnotations()
     }
 
     QString startDir;
-    Okular::Part* curPart = qobject_cast< Okular::Part* >(m_tabs[activeTab].part);
+    KParts::ReadWritePart* curPart = m_tabs[activeTab].part;
     if ( curPart->url().isLocalFile() )
         startDir = curPart->url().toLocalFile();
     KFileDialog dlg( startDir, QString(), this );
@@ -468,10 +466,11 @@ void Shell::importAnnotations()
     KUrl url = dlg.selectedUrl();
     if ( !url.isEmpty() )
     {
-        Okular::Part* tempPart = qobject_cast< Okular::Part* >(m_partFactory->create(this));
-        qobject_cast<KParts::ReadWritePart*>(tempPart)->openUrl( url );
-        curPart->importAnnotations(tempPart);
-        if( tempPart->factory() ) tempPart->factory()->removeClient( tempPart );
+        KParts::ReadWritePart* tempPart = m_partFactory->create<KParts::ReadWritePart>(this);
+        tempPart->openUrl( url );
+        qobject_cast<KDocumentViewer*>(m_tabs[activeTab].part)->importAnnotations(tempPart);
+        if( tempPart->factory() )
+            tempPart->factory()->removeClient( tempPart );
         tempPart->disconnect();
         tempPart->deleteLater();
     }

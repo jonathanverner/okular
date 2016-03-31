@@ -2279,9 +2279,13 @@ bool Part::saveAs( const KUrl & saveUrl )
     return true;
 }
 
-void Part::importAnnotations(const Part* part)
+void Part::importAnnotations(const QObject* part)
 {
-    m_document->importAnnotations(part->m_document);
+    const Part *p = qobject_cast<const Part*>(part);
+    if (p)
+        m_document->importAnnotations(p->m_document);
+    else
+        qDebug() << "Cannot import annotations from an object which is not a Part";
 }
 
 void Part::slotSaveCopyAs()

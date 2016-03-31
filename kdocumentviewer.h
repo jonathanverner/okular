@@ -13,6 +13,7 @@
 #include "okular_part_export.h"
 
 #include <QtCore/QStringList>
+class QObject;
 
 class KUrl;
 
@@ -45,6 +46,11 @@ class OKULAR_PART_EXPORT KDocumentViewer
          * Return a list with the supported mimetypes.
          */
         virtual QStringList supportedMimeTypes() const = 0;
+
+        /**
+         * Import Annotations
+         */
+        virtual void importAnnotations(const QObject *doc) = 0;
 };
 
 Q_DECLARE_INTERFACE( KDocumentViewer, "org.kde.kdocumentviewer/0.1" )
