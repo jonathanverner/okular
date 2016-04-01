@@ -388,9 +388,9 @@ QStringList Shell::fileFormats() const
 
 void Shell::fileOpen()
 {
-	// this slot is called whenever the File->Open menu is selected,
-	// the Open shortcut is pressed (usually CTRL+O) or the Open toolbar
-	// button is clicked
+    // this slot is called whenever the File->Open menu is selected,
+    // the Open shortcut is pressed (usually CTRL+O) or the Open toolbar
+    // button is clicked
     KUrl url = selectUrl("Open Document");
     if ( !url.isEmpty() )
     {
