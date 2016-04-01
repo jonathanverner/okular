@@ -17,9 +17,12 @@
 #include "../shell/shell.h"
 #include "../shell/shellutils.h"
 #include "../core/document_p.h"
+#include "../core/annotations.h"
+#include <../page.h>
 #include "../ui/presentationwidget.h"
 #include "../part.h"
 #include "../settings.h"
+
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -68,6 +71,8 @@ private slots:
     void init();
     void cleanup();
 
+    void testImportAnnotations_data();
+    void testImportAnnotations();
     void testShell_data();
     void testShell();
     void testFileRemembersPagePosition_data();
@@ -136,6 +141,7 @@ void MainShellTest::init()
     urls << KUrl("file://" KDESRCDIR "data/file1.pdf");
     urls << KUrl("file://" KDESRCDIR "data/tocreload.pdf");
     urls << KUrl("file://" KDESRCDIR "data/contents.epub");
+    urls << KUrl("file://" KDESRCDIR "data/annots.pdf");
 
     foreach (const KUrl &url, urls)
     {
@@ -152,6 +158,35 @@ void MainShellTest::cleanup()
     {
         delete s;
     }
+}
+
+void MainShellTest::testImportAnnotations_data()
+{
+    QTest::addColumn<QString>("source");
+    QTest::addColumn<QString>("target");
+
+    QTest::newRow("import annotations") << KDESRCDIR "data/file1.pdf" << KDESRCDIR "data/annots.pdf";
+    QTest::newRow("import duplicate annotations") << KDESRCDIR "data/annots.pdf" << KDESRCDIR "data/annots.pdf";
+}
+
+void MainShellTest::testImportAnnotations()
+{
+    QFETCH(QString, source);
+    QFETCH(QString, target);
+
+    const QStringList paths = QStringList(target);
+
+    Okular::Status status = Okular::main(paths, QString());
+    QCOMPARE(status, Okular::Success);
+    Shell *s = findShell();
+    QVERIFY(s);
+
+    s->importAnnotations(source);
+
+    Okular::Part *part = s->findChild<Okular::Part*>();
+    QLinkedList< Okular::Annotation* > annots = partDocument(part)->page(0)->annotations();
+    QCOMPARE(annots.count(),2);
+
 }
 
 void MainShellTest::testShell_data()
