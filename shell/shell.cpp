@@ -438,38 +438,7 @@ KUrl Shell::selectUrl(const char *caption)
 void Shell::importAnnotations()
 {
     // This slot is called whenever the File->Import Annotations menu is selected,
-    const int activeTab = m_tabWidget->currentIndex();
-    if ( !m_fileformatsscanned )
-    {
-        const KDocumentViewer* const doc = qobject_cast<KDocumentViewer*>(m_tabs[activeTab].part);
-        if ( doc )
-            m_fileformats = doc->supportedMimeTypes();
-
-        if ( m_fileformats.isEmpty() )
-            m_fileformats = fileFormats();
-
-        m_fileformatsscanned = true;
-    }
-
-    QString startDir;
-    KParts::ReadWritePart* curPart = m_tabs[activeTab].part;
-    if ( curPart->url().isLocalFile() )
-        startDir = curPart->url().toLocalFile();
-    KFileDialog dlg( startDir, QString(), this );
-    dlg.setOperationMode( KFileDialog::Opening );
-
-    // A directory may be a document. E.g. comicbook generator.
-    if ( m_fileformats.contains( "inode/directory" ) )
-        dlg.setMode( dlg.mode() | KFile::Directory );
-
-    if ( m_fileformatsscanned && m_fileformats.isEmpty() )
-        dlg.setFilter( i18n( "*|All Files" ) );
-    else
-        dlg.setMimeFilter( m_fileformats );
-    dlg.setCaption( i18n( "Import Annotations" ) );
-    if ( !dlg.exec() )
-        return;
-    KUrl url = dlg.selectedUrl();
+    KUrl url = selectUrl("Import Annotations");
     if ( !url.isEmpty() )
     {
         KParts::ReadWritePart* tempPart = m_partFactory->create<KParts::ReadWritePart>(this);
