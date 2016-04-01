@@ -441,15 +441,24 @@ void Shell::importAnnotations()
     KUrl url = selectUrl("Import Annotations");
     if ( !url.isEmpty() )
     {
-        KParts::ReadWritePart* tempPart = m_partFactory->create<KParts::ReadWritePart>(this);
-        tempPart->openUrl( url );
-        qobject_cast<KDocumentViewer*>(m_tabs[activeTab].part)->importAnnotations(tempPart);
-        if( tempPart->factory() )
-            tempPart->factory()->removeClient( tempPart );
-        tempPart->disconnect();
-        tempPart->deleteLater();
+        importAnnotations(url);
     }
 }
+
+void Shell::importAnnotations(const KUrl& url)
+{
+    const int activeTab = m_tabWidget->currentIndex();
+    KParts::ReadWritePart* tempPart = m_partFactory->create<KParts::ReadWritePart>(this);
+    tempPart->openUrl( url );
+    qobject_cast<KDocumentViewer*>(m_tabs[activeTab].part)->importAnnotations(tempPart);
+    if( tempPart->factory() )
+    {
+        tempPart->factory()->removeClient( tempPart );
+    }
+    tempPart->disconnect();
+    tempPart->deleteLater();
+}
+
 
 void Shell::tryRaise()
 {

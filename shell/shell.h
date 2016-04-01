@@ -100,7 +100,18 @@ protected:
 
 private slots:
   void fileOpen();
+
+  /**
+   * Lets the user choose a file and imports the annotations
+   * from that file into the current document
+   */
   void importAnnotations();
+
+  /**
+   * Imports the annotations from the document located at @p url
+   * into the current document
+   */
+  void importAnnotations(const KUrl& url);
 
   void slotUpdateFullScreen();
   void slotShowMenubar();
