@@ -137,6 +137,17 @@ private:
   void connectPart( QObject* part );
   int  findTabIndex( QObject* sender );
 
+  /**
+   * Opens a dialog to let the user select a file.
+   * The caption of the dialog is @p caption.
+   * The starting directory is determined by the
+   * currently opened file, the shown files are filtered
+   * according to what the current documentviewer supports
+   * or according to fileformats (this is cached).
+   */
+  KUrl selectUrl(const char *caption);
+
+
 private:
   KPluginFactory* m_partFactory;
   KRecentFilesAction* m_recent;

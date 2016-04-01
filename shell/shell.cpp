@@ -391,6 +391,16 @@ void Shell::fileOpen()
 	// this slot is called whenever the File->Open menu is selected,
 	// the Open shortcut is pressed (usually CTRL+O) or the Open toolbar
 	// button is clicked
+    KUrl url = selectUrl("Open Document");
+    if ( !url.isEmpty() )
+    {
+        openUrl( url );
+    }
+}
+
+KUrl Shell::selectUrl(const char *caption)
+{
+    KUrl ret;
     const int activeTab = m_tabWidget->currentIndex();
     if ( !m_fileformatsscanned )
     {
@@ -419,14 +429,10 @@ void Shell::fileOpen()
         dlg.setFilter( i18n( "*|All Files" ) );
     else
         dlg.setMimeFilter( m_fileformats );
-    dlg.setCaption( i18n( "Open Document" ) );
-    if ( !dlg.exec() )
-        return;
-    KUrl url = dlg.selectedUrl();
-    if ( !url.isEmpty() )
-    {
-        openUrl( url );
-    }
+    dlg.setCaption( i18n( caption ) );
+    if ( dlg.exec() )
+        ret = dlg.selectedUrl();
+    return ret;
 }
 
 void Shell::importAnnotations()
