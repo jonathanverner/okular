@@ -425,7 +425,7 @@ KUrl Shell::selectUrl(const char *caption)
     if ( m_fileformats.contains( "inode/directory" ) )
         dlg.setMode( dlg.mode() | KFile::Directory );
 
-    if ( m_fileformatsscanned && m_fileformats.isEmpty() )
+    if ( m_fileformats.isEmpty() )
         dlg.setFilter( i18n( "*|All Files" ) );
     else
         dlg.setMimeFilter( m_fileformats );
