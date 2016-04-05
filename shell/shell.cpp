@@ -391,7 +391,7 @@ void Shell::fileOpen()
     // this slot is called whenever the File->Open menu is selected,
     // the Open shortcut is pressed (usually CTRL+O) or the Open toolbar
     // button is clicked
-    KUrl url = selectUrl("Open Document");
+    KUrl url = selectUrl( i18n( "Open Document" ) );
     if ( !url.isEmpty() )
     {
         openUrl( url );
@@ -429,7 +429,7 @@ KUrl Shell::selectUrl(const char *caption)
         dlg.setFilter( i18n( "*|All Files" ) );
     else
         dlg.setMimeFilter( m_fileformats );
-    dlg.setCaption( i18n( caption ) );
+    dlg.setCaption( caption );
     if ( dlg.exec() )
         ret = dlg.selectedUrl();
     return ret;
@@ -438,7 +438,7 @@ KUrl Shell::selectUrl(const char *caption)
 void Shell::importAnnotations()
 {
     // This slot is called whenever the File->Import Annotations menu is selected,
-    KUrl url = selectUrl("Import Annotations");
+    KUrl url = selectUrl( i18n( "Import Annotations" ) );
     if ( !url.isEmpty() )
     {
         importAnnotations(url);
