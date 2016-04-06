@@ -398,7 +398,7 @@ void Shell::fileOpen()
     }
 }
 
-KUrl Shell::selectUrl(const char *caption)
+KUrl Shell::selectUrl(const QString& caption)
 {
     KUrl ret;
     const int activeTab = m_tabWidget->currentIndex();

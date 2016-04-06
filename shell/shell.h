@@ -156,7 +156,7 @@ private:
    * according to what the current documentviewer supports
    * or according to fileformats (this is cached).
    */
-  KUrl selectUrl(const char *caption);
+  KUrl selectUrl(const QString& caption);
 
 
 private:
