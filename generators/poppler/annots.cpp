@@ -123,6 +123,12 @@ void PopplerAnnotationProxy::notifyAddition( Okular::Annotation *okl_ann, int pa
     // Bind poppler object to page
     Poppler::Page *ppl_page = ppl_doc->page( page );
     ppl_page->addAnnotation( ppl_ann );
+    if (okl_ann->revisionOf() != "")
+    {
+        Poppler::Annotation *replyTo = ppl_page->findAnnotationByName(okl_ann->revisionOf());
+        if (replyTo)
+            ppl_ann->setReplyTo(replyTo);
+    }
     delete ppl_page;
 
     // Set pointer to poppler annotation as native Id
@@ -168,6 +174,15 @@ void PopplerAnnotationProxy::notifyModification( const Okular::Annotation *okl_a
     s.setWidth( okl_ann->style().width() );
     s.setOpacity( okl_ann->style().opacity() );
     ppl_ann->setStyle( s );
+
+    if ( okl_ann->revisionOf() != "" )
+    {
+        Poppler::Page *ppl_page = ppl_doc->page( page );
+        Poppler::Annotation *replyTo = ppl_page->findAnnotationByName(okl_ann->revisionOf());
+        if (replyTo)
+            ppl_ann->setReplyTo(replyTo);
+        delete ppl_page;
+    }
 
     // Set type-specific properties (if any)
     switch ( ppl_ann->subType() )
@@ -361,6 +376,10 @@ Okular::Annotation* createAnnotationFromPopplerAnnotation( Poppler::Annotation *
             doc.appendChild( root );
             Poppler::AnnotationUtils::storeAnnotation( ann, root, doc );
             annotation = Okular::AnnotationUtils::createAnnotation( root );
+            QString anxml;
+            QTextStream strm(&anxml);
+            strm << root;
+            qDebug() << anxml;
             break;
         }
     }
