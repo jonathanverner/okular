@@ -1465,6 +1465,19 @@ void PDFGenerator::addAnnotations( Poppler::Page * popplerPage, Okular::Page * p
         }
         if ( doDelete )
             delete a;
+
+        foreach(Poppler::Annotation *revision, a->revisions())
+        {
+            Okular::Annotation * newrev = createAnnotationFromPopplerAnnotation( revision, &doDelete );
+            if ( newrev )
+            {
+                page->addAnnotation(newrev);
+                if ( !doDelete )
+                    annotationsHash.insert( newrev, revision );
+            }
+            if (doDelete)
+                delete a;
+        };
     }
 }
 
