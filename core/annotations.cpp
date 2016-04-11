@@ -425,11 +425,12 @@ class Annotation::Revision::Private
 {
     public:
         Private()
-            : m_annotation( 0 ), m_scope( Reply ), m_type( None )
+            : m_annotation( 0 ), m_ownAnnotPtr(true), m_scope( Reply ), m_type( None )
         {
         }
 
         Annotation *m_annotation;
+        bool m_ownAnnotPtr;
         RevisionScope m_scope;
         RevisionType m_type;
 };
@@ -458,10 +459,17 @@ Annotation::Revision& Annotation::Revision::operator=( const Revision &other )
     return *this;
 }
 
-void Annotation::Revision::setAnnotation( Annotation *annotation )
+void Annotation::Revision::setAnnotation( Annotation *annotation, bool takeOwnership )
 {
     d->m_annotation = annotation;
+    d->m_ownAnnotPtr = takeOwnership;
 }
+
+bool Annotation::Revision::haveOwnerShip() const
+{
+    return d->m_ownAnnotPtr;
+}
+
 
 Annotation *Annotation::Revision::annotation() const
 {
@@ -490,7 +498,7 @@ Annotation::RevisionType Annotation::Revision::type() const
 
 
 AnnotationPrivate::AnnotationPrivate()
-    : m_page( 0 ), m_flags( 0 ), m_disposeFunc( 0 )
+    : m_page( 0 ), m_flags( 0 ), m_revisionOf(""), m_disposeFunc( 0 )
 {
 }
 
@@ -502,7 +510,11 @@ AnnotationPrivate::~AnnotationPrivate()
 
     QLinkedList< Annotation::Revision >::iterator it = m_revisions.begin(), end = m_revisions.end();
     for ( ; it != end; ++it )
-        delete (*it).annotation();
+    {
+        if  ( (*it).haveOwnerShip() ) {
+            delete (*it).annotation();
+        }
+    }
 }
 
 Annotation::Annotation( AnnotationPrivate &dd )
@@ -672,6 +684,23 @@ const QLinkedList< Annotation::Revision > & Annotation::revisions() const
     return d->m_revisions;
 }
 
+const QString Annotation::revisionOf() const
+{
+    Q_D( const Annotation );
+    return d->m_revisionOf;
+}
+
+void Annotation::makeRevisionOf(Annotation* annot)
+{
+    Q_D( Annotation );
+    Annotation::Revision *rev = new Okular::Annotation::Revision();
+    const bool takeOwnership = false;
+    rev->setAnnotation(this,takeOwnership);
+    rev->setScope(Annotation::Reply);
+    annot->revisions().append(*rev);
+    d->m_revisionOf = annot->uniqueName();
+}
+
 void Annotation::setNativeId( const QVariant &id )
 {
     Q_D( Annotation );
@@ -782,6 +811,9 @@ void Annotation::store( QDomNode & annNode, QDomDocument & document ) const
     if ( d->m_revisions.isEmpty() )
         return;
 
+    if ( d->m_revisionOf != "")
+        e.setAttribute( "inReplyTo", d->m_revisionOf );
+
     // add all revisions as children of revisions element
     QLinkedList< Revision >::const_iterator it = d->m_revisions.begin(), end = d->m_revisions.end();
     for ( ; it != end; ++it )
@@ -793,6 +825,7 @@ void Annotation::store( QDomNode & annNode, QDomDocument & document ) const
         // set element attributes
         r.setAttribute( "revScope", (int)revision.scope() );
         r.setAttribute( "revType", (int)revision.type() );
+        r.setAttribute( "inReplyTo", d->m_uniqueName );
         // use revision as the annotation element, so fill it up
         AnnotationUtils::storeAnnotation( revision.annotation(), r, document );
     }
@@ -943,6 +976,9 @@ void AnnotationPrivate::setAnnotationProperties( const QDomNode& node )
             m_window.setSummary( ee.attribute( "summary" ) );
         }
     }
+
+    if ( e.hasAttribute( "inReplyTo") )
+        m_revisionOf = e.attribute( "inReplyTo" );
 
     // get the [revisions] element of the annotation node
     QDomNode revNode = node.firstChild();

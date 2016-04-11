@@ -550,13 +550,23 @@ class OKULAR_EXPORT Annotation
 
                 /**
                  * Sets the @p annotation the revision belongs to.
+                 * If @p takeOwnerShip is true then the revision
+                 * takes ownership of the annotation and deletes it
+                 * when it is no longer used. Otherwise it remains
+                 * in the ownership of the caller.
                  */
-                void setAnnotation( Annotation *annotation );
+                void setAnnotation( Annotation *annotation, bool takeOwnership = true);
 
                 /**
                  * Returns the annotation the revision belongs to.
                  */
                 Annotation *annotation() const;
+
+                /**
+                 * Returns true if the revision owns its annotation
+                 */
+                bool haveOwnerShip() const;
+
 
                 /**
                  * Sets the @p scope of the revision.
@@ -594,6 +604,21 @@ class OKULAR_EXPORT Annotation
          * Returns a reference to the revision list of the annotation.
          */
         const QLinkedList< Revision > & revisions() const;
+
+        /**
+         * Returns the unique name of the annotation this is a
+         * revision of (reply to) or the empty string if this is
+         * not a revision.
+         */
+        const QString revisionOf() const;
+
+        /**
+         * Makes this annotation a revision of (reply to) the annotation @p annot
+         *
+         * @Note It creates a new revision out of this annotation, adds it to the
+         *       list of revisionts of @p annot.
+         */
+        void makeRevisionOf(Annotation *annot);
 
         /**
          * Sets the "native" @p id of the annotation.
