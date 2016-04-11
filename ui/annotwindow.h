@@ -13,6 +13,7 @@
 
 #include <qcolor.h>
 #include <qframe.h>
+#include <qlinkedlist.h>
 
 namespace Okular {
 class Annotation;
@@ -26,12 +27,14 @@ class LatexRenderer;
 class KTextEdit;
 class MovableTitle;
 class QMenu;
+class QLayout;
+class QVBoxLayout;
 
 class AnnotWindow : public QFrame
 {
     Q_OBJECT
     public:
-        AnnotWindow( QWidget * parent, Okular::Annotation * annot, Okular::Document * document, int page );
+        AnnotWindow( QWidget* parent, Okular::Annotation* annot, Okular::Document* document, int page, bool isReply = false );
         ~AnnotWindow();
 
         void reloadInfo();
@@ -39,6 +42,8 @@ class AnnotWindow : public QFrame
     private:
         MovableTitle * m_title;
         KTextEdit *textEdit;
+        QVBoxLayout *mainlay;
+        QLinkedList<AnnotWindow *> m_replyWindows;
         QColor m_color;
         GuiUtils::LatexRenderer *m_latexRenderer;
         Okular::Annotation* m_annot;
@@ -46,6 +51,8 @@ class AnnotWindow : public QFrame
         int m_page;
         int m_prevCursorPos;
         int m_prevAnchorPos;
+        bool m_reply;
+        QLayout *replyLayout(Okular::Annotation *reply);
 
     protected:
         virtual void showEvent( QShowEvent * event );
@@ -57,6 +64,7 @@ class AnnotWindow : public QFrame
         void slotsaveWindowText();
         void renderLatex( bool render );
         void slotHandleContentsChangedByUndoRedo( Okular::Annotation* annot, QString contents, int cursorPos, int anchorPos);
+        void slotReply();
 
     signals:
         void containsLatex( bool );
