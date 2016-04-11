@@ -37,6 +37,7 @@
 #include "core/document.h"
 #include "latexrenderer.h"
 #include <core/utils.h>
+#include <settings.h>
 #include <KMessageBox>
 
 class CloseButton
@@ -60,7 +61,7 @@ class MovableTitle
   : public QWidget
 {
 public:
-    MovableTitle( QWidget * parent )
+    MovableTitle( QWidget * parent, bool reply = false)
       : QWidget( parent )
     {
         QVBoxLayout * mainlay = new QVBoxLayout( this );
@@ -82,9 +83,12 @@ public:
         dateLabel->setFont( f );
         dateLabel->setCursor( Qt::SizeAllCursor );
         buttonlay->addWidget( dateLabel );
-        CloseButton * close = new CloseButton( this );
-        connect( close, SIGNAL(clicked()), parent, SLOT(close()) );
-        buttonlay->addWidget( close );
+        if ( ! reply )
+        {
+            CloseButton * close = new CloseButton( this );
+            connect( close, SIGNAL(clicked()), parent, SLOT(close()) );
+            buttonlay->addWidget( close );
+        }
         // option button row
         QHBoxLayout * optionlay = new QHBoxLayout();
         mainlay->addLayout( optionlay );
@@ -183,13 +187,26 @@ private:
     QToolButton * latexButton;
 };
 
+QLayout* AnnotWindow::replyLayout(Okular::Annotation* reply)
+{
+    AnnotWindow *replyWindow = new AnnotWindow(this, reply, m_document, m_page, true);
+    QHBoxLayout * replylay = new QHBoxLayout();
+    replylay->addItem(new QSpacerItem( 10, 5, QSizePolicy::Fixed, QSizePolicy::Fixed ));
+    replylay->addWidget( replyWindow  );
+    m_replyWindows.append(replyWindow);
+    return replylay;
+}
+
 
 // Qt::SubWindow is needed to make QSizeGrip work
-AnnotWindow::AnnotWindow( QWidget * parent, Okular::Annotation * annot, Okular::Document *document, int page )
-    : QFrame( parent, Qt::SubWindow ), m_annot( annot ), m_document( document ), m_page( page )
+AnnotWindow::AnnotWindow( QWidget * parent, Okular::Annotation * annot, Okular::Document *document, int page, bool isReply )
+: QFrame( parent, isReply ? Qt::Widget | Qt::FramelessWindowHint : Qt::SubWindow ), m_annot( annot ), m_document( document ), m_page( page ), m_reply( isReply )
 {
     setAutoFillBackground( true );
-    setFrameStyle( Panel | Raised );
+    if (! m_reply )
+        setFrameStyle( Panel | Raised );
+    else
+        setFrameStyle(HLine);
     setAttribute( Qt::WA_DeleteOnClose );
 
     const bool canEditAnnotation = m_document->canModifyPageAnnotation( annot );
@@ -215,17 +232,33 @@ AnnotWindow::AnnotWindow( QWidget * parent, Okular::Annotation * annot, Okular::
     if (!canEditAnnotation)
         textEdit->setReadOnly(true);
 
-    QVBoxLayout * mainlay = new QVBoxLayout( this );
+    mainlay = new QVBoxLayout( this );
     mainlay->setMargin( 2 );
     mainlay->setSpacing( 0 );
-    m_title = new MovableTitle( this );
+    m_title = new MovableTitle( this, m_reply );
     mainlay->addWidget( m_title );
     mainlay->addWidget( textEdit );
-    QHBoxLayout * lowerlay = new QHBoxLayout();
-    mainlay->addLayout( lowerlay );
-    lowerlay->addItem( new QSpacerItem( 5, 5, QSizePolicy::Expanding, QSizePolicy::Fixed ) );
-    QSizeGrip * sb = new QSizeGrip( this );
-    lowerlay->addWidget( sb );
+
+    QLinkedList< Okular::Annotation::Revision > revisions = annot->revisions();
+    QLinkedList< Okular::Annotation::Revision >::const_iterator it = revisions.begin() , end = revisions.end();
+    for ( ; it != end; ++it )
+    {
+        const Okular::Annotation::Revision & revision = *it;
+        Okular::Annotation *ann = document->findAnnotation(page,revision.annotation()->uniqueName());
+        if ( ann )
+        {
+            mainlay->addLayout( replyLayout( ann ) );
+        }
+    }
+
+    if (! m_reply )
+    {
+        QHBoxLayout * lowerlay = new QHBoxLayout();
+        mainlay->addLayout( lowerlay );
+        lowerlay->addItem( new QSpacerItem( 5, 5, QSizePolicy::Expanding, QSizePolicy::Fixed ) );
+        QSizeGrip * sb = new QSizeGrip( this );
+        lowerlay->addWidget( sb );
+    }
 
     m_latexRenderer = new GuiUtils::LatexRenderer();
     emit containsLatex( GuiUtils::LatexRenderer::mightContainLatex( m_annot->contents() ) );
@@ -256,6 +289,12 @@ void AnnotWindow::reloadInfo()
     }
     m_title->setAuthor( m_annot->author() );
     m_title->setDate( m_annot->modificationDate() );
+    QLinkedList<AnnotWindow *>::iterator it = m_replyWindows.begin();
+
+    for(; it != m_replyWindows.end(); ++it )
+    {
+        (*it)->reloadInfo();
+    }
 }
 
 void AnnotWindow::showEvent( QShowEvent * event )
