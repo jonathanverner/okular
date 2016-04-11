@@ -4313,15 +4313,15 @@ bool Document::saveChanges( const QString &fileName, QString *errorText )
     return saveIface->save( fileName, SaveInterface::SaveChanges, errorText );
 }
 
-bool Document::hasAnnotation(int pg_num, Annotation* a)
+Annotation *Document::findAnnotation(int pg_num, const QString &name)
 {
     QLinkedList< Annotation* > annots = page(pg_num)->annotations();
     for(QLinkedList< Annotation* >::const_iterator it=annots.begin();it != annots.end(); ++it)
     {
-        if ( (*it)->uniqueName() == a->uniqueName() )
-            return true;
+        if ( (*it)->uniqueName() == name )
+            return *it;
     }
-    return false;
+    return 0;
 }
 
 
@@ -4339,10 +4339,14 @@ void Document::importAnnotations(const Document *doc)
             QLinkedList< Annotation* > annots = src_pg->annotations();
             for(QLinkedList< Annotation* >::const_iterator it=annots.begin();it != annots.end(); ++it)
             {
-                if ( !hasAnnotation(pg_num, *it) ) {
+                if ( !findAnnotation(pg_num, (*it)->uniqueName()) ) {
                     QDomElement annotationEl = domDoc.createElement("annotation");
                     AnnotationUtils::storeAnnotation(*it, annotationEl, domDoc);
                     Annotation* annotation = AnnotationUtils::createAnnotation(annotationEl);
+                    QString anxml;
+                    QTextStream strm(&anxml);
+                    strm << domDoc;
+                    qDebug() << "Importing annotation " << endl << anxml;
                     if (annotation)
                     {
                         d->performAddPageAnnotation(pg_num,annotation);

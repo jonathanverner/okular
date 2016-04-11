@@ -489,6 +489,12 @@ class OKULAR_EXPORT Document : public QObject
          */
         void requestTextPage( uint number );
 
+
+        /**
+         * Finds an annotation by its unique name @p name
+         */
+        Annotation *findAnnotation( int page, const QString &name );
+
         /**
          * Adds a new @p annotation to the given @p page.
          */
@@ -1116,8 +1122,6 @@ class OKULAR_EXPORT Document : public QObject
         friend class EditFormButtonsCommand;
         /// @endcond
         DocumentPrivate *const d;
-
-        bool hasAnnotation( int page, Annotation* a );
 
         Q_DISABLE_COPY( Document )
 
