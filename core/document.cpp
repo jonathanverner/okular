@@ -4313,6 +4313,17 @@ bool Document::saveChanges( const QString &fileName, QString *errorText )
     return saveIface->save( fileName, SaveInterface::SaveChanges, errorText );
 }
 
+Annotation *Document::findAnnotation(int pg_num, const QString &name)
+{
+    QLinkedList< Annotation* > annots = page(pg_num)->annotations();
+    for(QLinkedList< Annotation* >::const_iterator it=annots.begin();it != annots.end(); ++it)
+    {
+        if ( (*it)->uniqueName() == name )
+            return *it;
+    }
+    return 0;
+}
+
 void Document::registerView( View *view )
 {
     if ( !view )
